@@ -1,6 +1,7 @@
 package com.pki.servlet;
 
 import java.io.IOException;
+
 import java.io.PrintWriter;
 
 import javax.servlet.ServletException;
@@ -11,11 +12,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.pki.bean.RSA;
 
-@WebServlet("/DoDecrypt")
-public class DoDecrypt extends HttpServlet {
+@WebServlet("/GetPubKey")
+public class GetPubKey extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	public DoDecrypt() {
+	public GetPubKey() {
 		super();
 	}
 
@@ -24,10 +25,7 @@ public class DoDecrypt extends HttpServlet {
 		response.setCharacterEncoding("utf-8");
 		response.setContentType("text/html");
 		PrintWriter out = response.getWriter();
-		String data = request.getParameter("text");
-		if (data != null && !"".equals(data)) {
-			out.print(RSA.getInstance().decryptByPrivateKey(data, RSA.getInstance().getPRIVATE_KEY()));
-		}
+		out.write(RSA.getInstance().getPUBLIC_KEY());
 		out.flush();
 		out.close();
 	}

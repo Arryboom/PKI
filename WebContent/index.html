@@ -36,19 +36,18 @@
 
 	} */
 	$(function() {
+		//请求公钥
 		$.ajax({
 			type : "GET",
-			url : "/PKI/DoDecrypt",
-			data : {
-				par:"getpubkey"
-			},
+			url : "/PKI/GetPubKey",
+			data : null,
 			dataType : "text",
 			success : function(data) {
 				$("#d1").html("获取公钥成功");
 				$("#p1").html(data);
 			}
 		});
-
+		//客户端加密
 		$("#encrypt").click(function() {
 			var encrypt = new JSEncrypt();
 			encrypt.setPublicKey($("#p1").val());
@@ -56,12 +55,12 @@
 			$("#t2").val(apwd1);
 			$("#t1").val("");
 		})
+		//服务端加密
 		$("#decrypt").click(function() {
 			$.ajax({
 				type : "post",
 				url : "/PKI/DoDecrypt",
 				data : {
-					par : "doDecrypt",
 					text : $("#t2").val()
 				},
 				dataType : "text",

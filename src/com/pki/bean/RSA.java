@@ -58,9 +58,10 @@ public class RSA {
 	public Map<String, String> initKey() {
 		Map<String, String> map = new HashMap<String, String>();
 		try {
+			//随机生成密钥对
 			KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(KEY_ALGORITHM);
 			//按照指定字符串生成密钥对
-//			SecureRandom secureRandom = new SecureRandom("YXYBB".getBytes());
+//			SecureRandom secureRandom = new SecureRandom("我是字符串".getBytes());
 //			keyPairGen.initialize(1024, secureRandom);
 			
 			
