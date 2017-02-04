@@ -7,7 +7,6 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -20,7 +19,6 @@ import javax.crypto.Cipher;
 
 import com.pki.utils.Coder;
 
-/** */
 /**
  * RSA安全编码组件 参考:http://snowolf.iteye.com/blog/381767
  */
@@ -29,9 +27,9 @@ public class RSA {
 	private static final String SIGNATURE_ALGORITHM = "MD5withRSA";
 
 	// 公钥
-	private static String PUBLIC_KEY = "";
+	private static String PUBLIC_KEY;
 	// 私钥
-	private static String PRIVATE_KEY = "";
+	private static String PRIVATE_KEY;
 
 	public String getPUBLIC_KEY() {
 		return PUBLIC_KEY;
@@ -58,13 +56,12 @@ public class RSA {
 	public Map<String, String> initKey() {
 		Map<String, String> map = new HashMap<String, String>();
 		try {
-			//随机生成密钥对
+			// 随机生成密钥对
 			KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(KEY_ALGORITHM);
-			//按照指定字符串生成密钥对
-//			SecureRandom secureRandom = new SecureRandom("我是字符串".getBytes());
-//			keyPairGen.initialize(1024, secureRandom);
-			
-			
+			// 按照指定字符串生成密钥对
+			// SecureRandom secureRandom = new SecureRandom("我是字符串".getBytes());
+			// keyPairGen.initialize(1024, secureRandom);
+
 			keyPairGen.initialize(1024);
 			KeyPair keyPair = keyPairGen.generateKeyPair();
 			// 公钥
@@ -94,22 +91,38 @@ public class RSA {
 	 * @throws Exception
 	 */
 	public String encryptByPublicKey(String data, String key) {
-		try {// 对公钥解密
-			byte[] keyBytes = Coder.decryptBASE64(key);
-
+		try {
 			// 取得公钥
-			X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(keyBytes);
+			X509EncodedKeySpec x509KeySpec = new X509EncodedKeySpec(Coder.decryptBASE64(key));
 			KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
 			Key publicKey = keyFactory.generatePublic(x509KeySpec);
 
-			// 对数据加密
 			Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
 			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 
-			return Coder.encryptBASE64(cipher.doFinal(data.getBytes("utf-8")));
+			byte[] encryptedData = data.getBytes("utf-8");
+			int inputLen = encryptedData.length;
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			int offSet = 0;
+			byte[] cache;
+			int i = 0;
+			// 对数据分段加密
+			while (inputLen - offSet > 0) {
+				if (inputLen - offSet > 117) {
+					cache = cipher.doFinal(encryptedData, offSet, 117);
+				} else {
+					cache = cipher.doFinal(encryptedData, offSet, inputLen - offSet);
+				}
+				out.write(cache, 0, cache.length);
+				i++;
+				offSet = i * 117;
+			}
+			byte[] decryptedData = out.toByteArray();
+			out.close();
+			return Coder.encryptBASE64(decryptedData);
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("公钥加密异常" + e);
+			System.out.println("公钥加密异常!");
 		}
 		return null;
 	}
@@ -132,7 +145,6 @@ public class RSA {
 			KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
 			Key publicKey = keyFactory.generatePublic(x509KeySpec);
 
-			// 对数据解密
 			Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
 			cipher.init(Cipher.DECRYPT_MODE, publicKey);
 
@@ -160,7 +172,7 @@ public class RSA {
 			return new String(decryptedData, "utf-8");
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("公钥解密异常" + e);
+			System.out.println("公钥解密异常");
 		}
 		return null;
 	}
@@ -184,14 +196,33 @@ public class RSA {
 			KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
 			Key privateKey = keyFactory.generatePrivate(pkcs8KeySpec);
 
-			// 对数据加密
 			Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
 			cipher.init(Cipher.ENCRYPT_MODE, privateKey);
 
-			return Coder.encryptBASE64(cipher.doFinal(data.getBytes("utf-8")));
+			byte[] encryptedData = data.getBytes("utf-8");
+			int inputLen = encryptedData.length;
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			int offSet = 0;
+			byte[] cache;
+			int i = 0;
+			// 对数据分段加密
+			while (inputLen - offSet > 0) {
+				if (inputLen - offSet > 117) {
+					cache = cipher.doFinal(encryptedData, offSet, 117);
+				} else {
+					cache = cipher.doFinal(encryptedData, offSet, inputLen - offSet);
+				}
+				out.write(cache, 0, cache.length);
+				i++;
+				offSet = i * 117;
+			}
+			byte[] decryptedData = out.toByteArray();
+			out.close();
+			return Coder.encryptBASE64(decryptedData);
+
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("私钥加密异常" + e);
+			System.out.println("私钥加密异常");
 		}
 		return null;
 	}
@@ -214,7 +245,6 @@ public class RSA {
 			KeyFactory keyFactory = KeyFactory.getInstance(KEY_ALGORITHM);
 			Key privateKey = keyFactory.generatePrivate(pkcs8KeySpec);
 
-			// 对数据解密
 			Cipher cipher = Cipher.getInstance(keyFactory.getAlgorithm());
 			cipher.init(Cipher.DECRYPT_MODE, privateKey);
 
@@ -243,7 +273,7 @@ public class RSA {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("私钥解密异常" + e);
+			System.out.println("私钥解密异常");
 		}
 		return null;
 	}
@@ -324,5 +354,27 @@ public class RSA {
 
 	public static RSA getInstance() {
 		return rsa;
+	}
+
+	public static void main(String args[]) {
+		RSA.getInstance().initKey();
+		StringBuilder sb = new StringBuilder();
+		int i = 0;
+		while (i < 1000) {
+			sb.append("a");
+			i++;
+		}
+		String a = sb.toString();
+		System.out.println("私钥加密，公钥解密");
+		String _tmp = RSA.getInstance().encryptByPrivateKey(a, PRIVATE_KEY);
+		if (RSA.getInstance().decryptByPublicKey(_tmp, PUBLIC_KEY).equals(a)) {
+			System.out.println("pass");
+		}
+
+		System.out.println("公钥加密，私钥解密");
+		String _tmp1 = RSA.getInstance().encryptByPublicKey(a, PUBLIC_KEY);
+		if (RSA.getInstance().decryptByPrivateKey(_tmp1, PRIVATE_KEY).equals(a)) {
+			System.out.println("pass");
+		}
 	}
 }
